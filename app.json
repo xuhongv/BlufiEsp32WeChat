@@ -1,13 +1,15 @@
 {
   "pages": [
+    "pages/index/index",
     "pages/search/search",
     "pages/device/device"
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#f8f8f8",
-    "navigationBarTitleText": "BLE Demo",
+    "navigationBarBackgroundColor": "#99CCFF",
+    "navigationBarTitleText": "BluFiEsp32",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#f8f8f8"
-  }
+  },
+  "sitemapLocation": "sitemap.json"
 }

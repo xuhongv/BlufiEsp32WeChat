@@ -1,56 +1,76 @@
 const app = getApp()
+let bluFiEsp32Obj = require('../../utils/bluFiEsp32Utils.js');
+import Toast from '../../utils/dist/toast/toast';
+
 Page({
   data: {
+    toast: null,
+    timer: null,
     searching: false,
     devicesList: []
   },
-  Search: function () {
-   
+  Search: function() {
+
     var that = this
     if (!that.data.searching) {
       wx.closeBluetoothAdapter({
-        complete: function (res) {
-          console.log(res)
+        complete: function(res) {
+          //console.log(res)
           wx.openBluetoothAdapter({
-            success: function (res) {
+            success: function(res) {
               console.log(res)
               wx.getBluetoothAdapterState({
-                success: function (res) {
+                success: function(res) {
                   console.log(res)
                 }
               })
               wx.startBluetoothDevicesDiscovery({
                 allowDuplicatesKey: false,
-                success: function (res) {
-                  console.log(res)
+                success: function(res) {
+                  let second = 15;
                   that.setData({
                     searching: true,
-                    devicesList: []
+                    devicesList: [],
+                    toast: Toast.loading({
+                      duration: 0, // 持续展示 toast
+                      forbidClick: true, // 禁用背景点击
+                      message: `搜索中${second}秒.`,
+                    })
                   })
+                  that.data.timer = setInterval(() => {
+                    second--;
+                    if (second) {
+                      if (second % 2)
+                        that.data.toast.setData({
+                          message: `搜索中${second}秒...`
+                        });
+                      else that.data.toast.setData({
+                        message: `搜索中${second}秒..`
+                      });
+                    } else {
+                      clearInterval(that.data.timer);
+                      Toast.clear();
+                      that.data.timer = null;
+                      if (that.data.devicesList.length == 0)
+                        Toast.fail('暂未发现设备');
+                    }
+                  }, 1000);
                 }
               })
             },
-            fail: function (res) {
-              console.log(res)
-              wx.showModal({
-                title: '提示',
-                content: '请检查手机蓝牙是否打开',
-                showCancel: false,
-                success: function (res) {
-                  that.setData({
-                    searching: false
-                  })
-                }
+            fail: function(res) {
+              Toast.fail('蓝牙未开启');
+              that.setData({
+                searching: false
               })
             }
           })
         }
       })
-    }
-    else {
+    } else {
       wx.stopBluetoothDevicesDiscovery({
-        success: function (res) {
-          console.log(res)
+        success: function(res) {
+          //console.log(res)
           that.setData({
             searching: false
           })
@@ -58,10 +78,10 @@ Page({
       })
     }
   },
-  Connect: function (e) {
+  Connect: function(e) {
     var that = this
     var advertisData, name
-    console.log(e.currentTarget.id)
+    //console.log(e.currentTarget.id)
     for (var i = 0; i < that.data.devicesList.length; i++) {
       if (e.currentTarget.id == that.data.devicesList[i].deviceId) {
         name = that.data.devicesList[i].name
@@ -69,8 +89,8 @@ Page({
       }
     }
     wx.stopBluetoothDevicesDiscovery({
-      success: function (res) {
-        console.log(res)
+      success: function(res) {
+        //console.log(res)
         that.setData({
           searching: false
         })
@@ -81,7 +101,7 @@ Page({
     })
     wx.createBLEConnection({
       deviceId: e.currentTarget.id,
-      success: function (res) {
+      success: function(res) {
         console.log(res)
         wx.hideLoading()
         wx.showToast({
@@ -93,7 +113,7 @@ Page({
           url: '../device/device?connectedDeviceId=' + e.currentTarget.id + '&name=' + name
         })
       },
-      fail: function (res) {
+      fail: function(res) {
         console.log(res)
         wx.hideLoading()
         wx.showModal({
@@ -104,15 +124,19 @@ Page({
       }
     })
   },
-  onLoad: function (options) {
-    console.log('app.globalData.glodataEnum.PACKAGE_VALUE:' + app.globalData.dataEnum.PACKAGE_VALUE);
+  onLoad: function(options) {
+
+    //console.log('getFilterDeviceName:' + bluFiEsp32Obj.getFilterDeviceName());
+    //console.log('app.globalData.glodataEnum.PACKAGE_VALUE:' + app.globalData.dataEnum.PACKAGE_VALUE);
     var that = this
     var list_height = ((app.globalData.SystemInfo.windowHeight - 50) * (750 / app.globalData.SystemInfo.windowWidth)) - 60
+
     that.setData({
       list_height: list_height
     })
-    wx.onBluetoothAdapterStateChange(function (res) {
-      console.log(res)
+
+    wx.onBluetoothAdapterStateChange(function(res) {
+      //console.log(res)
       that.setData({
         searching: res.discovering
       })
@@ -122,19 +146,17 @@ Page({
         })
       }
     })
-    wx.onBluetoothDeviceFound(function (devices) {
+
+    wx.onBluetoothDeviceFound(function(devices) {
+
       //剔除重复设备，兼容不同设备API的不同返回值
       var isnotexist = true
       if (devices.deviceId) {
-        if (devices.advertisData)
-        {
+        if (devices.advertisData) {
           devices.advertisData = app.buf2hex(devices.advertisData)
-        }
-        else
-        {
+        } else {
           devices.advertisData = ''
         }
-        console.log(devices)
         for (var i = 0; i < that.data.devicesList.length; i++) {
           if (devices.deviceId == that.data.devicesList[i].deviceId) {
             isnotexist = false
@@ -143,14 +165,10 @@ Page({
         if (isnotexist) {
           that.data.devicesList.push(devices)
         }
-      }
-      else if (devices.devices) {
-        if (devices.devices[0].advertisData)
-        {
+      } else if (devices.devices) {
+        if (devices.devices[0].advertisData) {
           devices.devices[0].advertisData = app.buf2hex(devices.devices[0].advertisData)
-        }
-        else
-        {
+        } else {
           devices.devices[0].advertisData = ''
         }
         console.log(devices.devices[0])
@@ -162,14 +180,10 @@ Page({
         if (isnotexist) {
           that.data.devicesList.push(devices.devices[0])
         }
-      }
-      else if (devices[0]) {
-        if (devices[0].advertisData)
-        {
+      } else if (devices[0]) {
+        if (devices[0].advertisData) {
           devices[0].advertisData = app.buf2hex(devices[0].advertisData)
-        }
-        else
-        {
+        } else {
           devices[0].advertisData = ''
         }
         console.log(devices[0])
@@ -182,31 +196,39 @@ Page({
           that.data.devicesList.push(devices[0])
         }
       }
+      //过滤名字
+      let getDevicesList = bluFiEsp32Obj.getFilterDevice(that.data.devicesList);
       that.setData({
-        devicesList: that.data.devicesList
+        devicesList: getDevicesList
       })
+      //搜索到有设备，停止搜索，显示加载完成
+      if (getDevicesList.length) {
+        that.onHide();
+        Toast.clear();
+      }
     })
+    this.Search();
   },
-  onReady: function () {
-
-  },
-  onShow: function () {
-    
-  },
-  onHide: function () {
+  onHide: function() {
     var that = this
-    that.setData({
-      devicesList: []
-    })
+    // that.setData({
+    //   devicesList: []
+    // })
     if (this.data.searching) {
       wx.stopBluetoothDevicesDiscovery({
-        success: function (res) {
-          console.log(res)
+        success: function(res) {
+          //console.log(res)
           that.setData({
             searching: false
           })
         }
       })
+    }
+  },
+  onUnload: function() {
+    if (that.data.timer) {
+      clearInterval(that.data.timer);
+      that.data.timer = null;
     }
   }
 })

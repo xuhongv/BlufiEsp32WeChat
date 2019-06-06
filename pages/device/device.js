@@ -19,16 +19,9 @@ Page({
   Send: function() {
     var that = this
     if (that.data.connected) {
-
-
-
       that.sendSSID();
       that.sendPASSWORD();
       that.notifyConnect();
-
-
-
-
     } else {
       wx.showModal({
         title: '提示',
@@ -84,38 +77,25 @@ Page({
       })
     })
     wx.onBLECharacteristicValueChange(function(res) {
-      //console.log('接收到数据：' + JSON.stringify(res))
-      //var receiveText = app.buf2string(res.value)
-      //console.log('接收到数据：' + receiveText)
-      // that.setData({
-      //   receiveText: receiveText
-      // })
-
-      console.log('接收到数据类型：' + typeof res.value)
-      console.log('接收到数据 res.value：' + JSON.stringify(res.value))
+    
+      // console.log('接收到数据类型：' + typeof res.value)
+      // console.log('接收到数据 res.value：' + JSON.stringify(res.value))
       let arrayBuffer = new ArrayBuffer(15);
       let array = Array.prototype.slice.call(new Uint8Array(res.value));
 
-      for (var i = 0; i < array.length; i++) {
-        console.log('接收到数据：' + i + ":" + array[i])
+      let type = array[0] & 0xff;
+      //console.log('接收到数据类型 arry[0]=' + array[0]+",type=" + type)
+      // let pkgType = array[0] & 0x3;
+      // let subType = ((array[0] & 0xfc) >> 2);
+      // console.log('接收到数据类型 pkgType：' + pkgType)
+      // console.log('接收到数据类型 subType' + subType)
+
+      for (var i = 2; i < array.length; i++) {
+        //console.log('接收到数据：' + i + ":" + array[i] + ":" + array[i].toString(16))
       }
 
-      var receiveText = that.ab2str(res.value)
-      console.log('接收到数据 receiveText' + receiveText)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      // var receiveText = that.ab2str(res.value)
+      // console.log('接收到数据 receiveText' + receiveText)
 
 
     })
@@ -130,7 +110,7 @@ Page({
 
   },
   notifyConnect: function() {
-    let password = 'xuhongyss123456'
+    let password = 'oo'
     let u8buffer = new Uint8Array(password.length)
     for (var i = 0; i < password.length; i++) {
       u8buffer[i] = password.charCodeAt(i)
@@ -141,7 +121,7 @@ Page({
       u8buffer);
   },
   sendSSID: function() {
-    let password = 'XuHongYssIOT'
+    let password = 'app_haier'
     let u8buffer = new Uint8Array(password.length)
     for (var i = 0; i < password.length; i++) {
       u8buffer[i] = password.charCodeAt(i)
@@ -152,7 +132,7 @@ Page({
       u8buffer);
   },
   sendPASSWORD: function() {
-    let password = 'xuhongyss123456'
+    let password = 'xlinyun@123456'
     let u8buffer = new Uint8Array(password.length)
     for (var i = 0; i < password.length; i++) {
       u8buffer[i] = password.charCodeAt(i)
