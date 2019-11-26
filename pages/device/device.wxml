@@ -1,10 +1,29 @@
 <view class="container">
-  <text style="font-size:medium;word-break:break-all">设备名称：{{name}}</text>
-  <text style="font-size:x-small;color:gray;word-break:break-all">设备mac地址：{{connectedDeviceId}}</text>
-  <text style="font-size:x-small;color:gray">状态：{{connected?"已连接":"已断开"}}</text>
-  <text style="font-size:medium;margin-top:10px">发送内容：</text>
-  <input class="input" value="{{inputText}}" bindinput="bindInput" maxlength="20"/>
-  <text style="font-size:medium;margin-top:10px">接收内容：</text>
-  <input class="input" disabled value="{{receiveText}}" maxlength="20"/>
-  <button type="primary" class="button" bindtap="Send">发送</button>
+  <view class="schedule" wx:if="{{!failure}}">
+    <view class="schedule-result schedule-success">
+      <image class="schedule-img" mode="aspectFit" src="../../images/round.gif"></image>
+      <view class="desc-wrapper">
+        <view class="text-value">
+          <text>{{valueProgress}}</text>
+          <text class="text-samll">%</text>
+        </view>
+        <view class="text-desc">{{desc}}</view>
+      </view>
+    </view>
+  </view>
+  <view class="schedule fail" wx:else>
+    <view class="schedule-result schedule-fail">
+      <image class="schedule-img" mode="aspectFit" src="../../images/failure.png"></image>
+      <view class="desc-wrapper">
+        <view class="text-sigh">
+          <text>!</text>
+        </view>
+        <view class="text-desc">{{desc}}</view>
+      </view>
+    </view>
+  </view>
+  <view class="process-wrapper">
+    <text class="text-process" wx:for="{{processList}}" wx:key="*this">{{item}}</text>
+    <text>{{vConsoleV}}</text>
+  </view>
 </view>
