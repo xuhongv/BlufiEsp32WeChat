@@ -36,10 +36,30 @@ const SUBTYPE_CUSTOM_DATA = 0x13;
 var DH_P = "cf5cf5c38419a724957ff5dd323b9c45c3cdd261eb740f69aa94b8bb1a5c96409153bd76b24222d03274e4725a5406092e9e82e9135c643cae98132b0d95f7d65347c68afc1e677da90e51bbab5f5cf429c291b4ba39c6b2dc5e8c7231e46aa7728e87664532cdf547be20c9a3fa8342be6e34371a27c06f7dc0edddd2f86373";
 var DH_G = "02";
 
-const descSucList = ["Bluetooth connecting...", "Bluetooth connection successful", "Device information is successfully obtained", "Attribute information is successfully obtained", "Send configuration information...", "Configuration information sent successfully", "Connection successfully"];
-const descFailList = ["Bluetooth connection failed", "Device information acquisition failed", "Attribute information acquisition failed", "Configuration information sent failed", "Distribution network failed"];
-const successList = { "0": "NULL", "1": "STA", "2": "SoftAP", "3": "SoftAP & STA" };
-const failList = { "0": "sequence error", "1": "checksum error", "2": "decrypt error", "3": "encrypt error", "4": "init security error", "5": "dh malloc error", "6": "dh param error", "7": "read param error", "8": "make public error" };
+const descSucListEN = ["Bluetooth connecting...", "Bluetooth connection successful", "Device information is successfully obtained", "Attribute information is successfully obtained", "Send configuration information...", "Configuration information sent successfully", "Connection successfully"];
+const descFailListEN = ["Bluetooth connection failed", "Device information acquisition failed", "Attribute information acquisition failed", "Configuration information sent failed", "Distribution network failed"];
+
+const descSucList = ["蓝牙连接...", "蓝牙连接成功", "设备信息已成功获取", "属性信息已成功获取", "发送配置信息...", "成功发送配置信息", "成功连接"];
+const descFailList = ["蓝牙连接失败", "设备信息获取失败", "属性信息获取失败", "配置信息发送失败", "网络配置失败"];
+
+
+const successList = {
+  "0": "NULL",
+  "1": "STA",
+  "2": "SoftAP",
+  "3": "SoftAP & STA"
+};
+const failList = {
+  "0": "sequence error",
+  "1": "checksum error",
+  "2": "decrypt error",
+  "3": "encrypt error",
+  "4": "init security error",
+  "5": "dh malloc error",
+  "6": "dh param error",
+  "7": "read param error",
+  "8": "make public error"
+};
 var CRC_TB = [
   0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
   0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318, 0xb37b, 0xa35a, 0xd3bd, 0xc39c, 0xf3ff, 0xe3de,
@@ -63,7 +83,7 @@ var CRC_TB = [
 const ab2hex = buffer => {
   var hexArr = Array.prototype.map.call(
     new Uint8Array(buffer),
-    function (bit) {
+    function(bit) {
       return ('00' + bit.toString(16)).slice(-2)
     }
   )
@@ -88,12 +108,13 @@ const hexCharCodeToStr = hexCharCodeStr => {
   return resultStr.join("");
 }
 //过滤名称
-const filterDevice = (devices, name) => {
-  var self = this, list = [];
+const filterDevice = (devices, filterName) => {
+  var self = this,
+    list = [];
   for (var i = 0; i < devices.length; i++) {
     var device = devices[i];
-    var re = new RegExp("^(BLUFI)");
-    if (re.test(device[name])) {
+    var re = new RegExp("^(" + filterName + ")");
+    if (re.test(device["name"])) {
       list.push(device);
     }
   }
@@ -158,7 +179,7 @@ const sortBy = (attr, rev) => {
   } else {
     rev = (rev) ? 1 : -1;
   }
-  return function (a, b) {
+  return function(a, b) {
     a = a[attr];
     b = b[attr];
     if (a < b) {
@@ -207,7 +228,10 @@ const writeData = (type, subType, frameCtl, seq, len, data) => {
 }
 //是否分包
 const isSubcontractor = (data, checksum, sequence, encrypt) => {
-  var len = 0, lenData = [], laveData = [], flag = false;
+  var len = 0,
+    lenData = [],
+    laveData = [],
+    flag = false;
   var total = data.length;
   if (total > 16) {
     if (checksum) {
@@ -230,7 +254,12 @@ const isSubcontractor = (data, checksum, sequence, encrypt) => {
   if (checksum) {
     lenData = assemblyChecksum(lenData, len, sequence);
   }
-  return { "len": len, "lenData": lenData, "laveData": laveData, "flag": flag }
+  return {
+    "len": len,
+    "lenData": lenData,
+    "laveData": laveData,
+    "flag": flag
+  }
 }
 const assemblyChecksum = (list, len, sequence, encrypt) => {
   var checkData = [];
@@ -246,7 +275,9 @@ const assemblyChecksum = (list, len, sequence, encrypt) => {
 }
 //加密发送的数据
 const encrypt = (aesjs, md5Key, sequence, data, checksum) => {
-  var iv = generateAESIV(sequence), sumArr = [], list = [];
+  var iv = generateAESIV(sequence),
+    sumArr = [],
+    list = [];
   if (checksum) {
     var len = data.length - 2;
     list = data.slice(0, len);
@@ -259,8 +290,9 @@ const encrypt = (aesjs, md5Key, sequence, data, checksum) => {
 }
 //判断返回的数据是否加密
 const isEncrypt = (self, fragNum, list, md5Key) => {
-  var checksum = [], checkData = [];
-  if (fragNum[7] == "1") {//返回数据加密
+  var checksum = [],
+    checkData = [];
+  if (fragNum[7] == "1") { //返回数据加密
     if (fragNum[6] == "1") {
       var len = list.length - 2;
       // checkData = list.slice(2, len);
@@ -272,16 +304,16 @@ const isEncrypt = (self, fragNum, list, md5Key) => {
       list = list.slice(0, len);
     }
     var iv = this.generateAESIV(parseInt(list[2], 16));
-    if (fragNum[3] == "0") {//未分包
+    if (fragNum[3] == "0") { //未分包
       list = list.slice(4);
       self.setData({
         flagEnd: true
       })
-    } else {//分包
+    } else { //分包
       list = list.slice(6);
     }
     list = uint8ArrayToArray(this.blueAesDecrypt(aesjs, md5Key, iv, new Uint8Array(list)));
-  } else {//返回数据未加密
+  } else { //返回数据未加密
     if (fragNum[6] == "1") {
       var len = list.length - 2;
       // checkData = list.slice(2, len);
@@ -291,12 +323,12 @@ const isEncrypt = (self, fragNum, list, md5Key) => {
       // var checksumByte2 = (crc >> 8) & 0xff;
       list = list.slice(0, len);
     }
-    if (fragNum[3] == "0") {//未分包
+    if (fragNum[3] == "0") { //未分包
       list = list.slice(4);
       self.setData({
         flagEnd: true
       })
-    } else {//分包
+    } else { //分包
       list = list.slice(6);
     }
   }
@@ -375,12 +407,12 @@ const send = (method, url, data, suc, error) => {
       'Content-Type': 'application/json'
     },
     method: method,
-    success: function (res) {
+    success: function(res) {
       if (!_isEmpty(suc)) {
         suc(res.data);
       }
     },
-    fail: function (res) {
+    fail: function(res) {
       if (!_isEmpty(error)) {
         error();
       }

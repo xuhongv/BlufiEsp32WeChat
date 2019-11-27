@@ -6,6 +6,7 @@ Page({
   data: {
     deviceList: [],
     deviceId: "",
+    blufiFilterName: null,
   },
   bindViewConnect: function(event) {
     console.log("click:" + JSON.stringify(event))
@@ -45,8 +46,7 @@ Page({
     var self = this;
     wx.getBluetoothDevices({
       success: function(res) {
-        console.log(res);
-        var list = util.filterDevice(res.devices, "name");
+        var list = util.filterDevice(res.devices, self.data.blufiFilterName);
         if (list.length > 0) {
           wx.stopPullDownRefresh();
           wx.hideLoading();
@@ -58,7 +58,7 @@ Page({
     })
     wx.onBluetoothDeviceFound(function(res) {
       console.log(res.devices[0].name);
-      var list = util.filterDevice(res.devices, "name");
+      var list = util.filterDevice(res.devices, self.data.blufiFilterName);
       if (list.length > 0) {
         wx.stopPullDownRefresh();
         wx.hideLoading();
@@ -68,8 +68,11 @@ Page({
       })
     })
   },
-  onLoad: function() {
+  onLoad: function(options) {
     var self = this;
+    this.setData({
+      blufiFilterName: options.blufiFilterName
+    })
     wx.setNavigationBarTitle({
       title: '设备扫描'
     });
@@ -78,9 +81,6 @@ Page({
     })
     self.openBluetooth();
   },
-  /**
-   * 生命周期函数--监听页面显示
-   */
   onShow: function() {
     var self = this,
       deviceId = self.data.deviceId;

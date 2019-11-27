@@ -1,7 +1,7 @@
 <view class="container">
   <view class="header-wrapper">
     <image class="header-image" mode="aspectFit" src="../../images/esp32.png"></image>
-    <text space='ensp' class='content-text'>    BluFi是一款基于蓝牙通道的Wi-Fi网络配置功能，适用乐鑫esp32芯片。本小程序非官网编写，但开源奉献国内物联网！欲要了解更多使用技巧，请访问我的GitHub项目。</text>
+    <text space='ensp' class='content-text'>    BluFi是一款基于蓝牙通道的Wi-Fi网络配置功能，适用乐鑫esp32芯片。本小程序参考官网代码二次编写，全部开源奉献国内物联网！欲要了解更多使用技巧，请访问我的GitHub项目。</text>
   </view>
   <view class="content-wrapper">
     <view class="section-input">
@@ -13,7 +13,7 @@
     </view>
   </view>
   <view class="weui-footer weui-footer_fixed-bottom">
-    <view class="weui-footer__text">Copyright ©2019 半颗心脏 https://github.com/xuhongv </view>
+    <view class="weui-footer__text">Copyright V1.1 ©2019 半颗心脏 https://github.com/xuhongv </view>
   </view>
 </view>
 <van-toast id="van-toast" />
