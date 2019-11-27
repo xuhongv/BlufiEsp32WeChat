@@ -23,8 +23,8 @@ BlufiEsp32WeChat 是基于 **微信小程序蓝牙配网设备** 实现的开源
 # 本人开源 微信物联网控制 一览表
 
 - 实现微信小程序连接mqtt服务器，可控制esp8266智能硬件等:https://github.com/xuhongv/WeChatMiniEsp8266
-- 微信公众号airkiss配网以及近场发现在esp8266 rtos3.1 sdk的实现: https://github.com/xuhongv/xLibEsp8266Rtos3.1AirKiss
-- 微信公众号airkiss配网以及近场发现功能在esp32 esp-idf sdk的实现:https://github.com/xuhongv/xLibEsp32IdfAirKiss
+- 微信公众号airkiss配网以及近场发现在esp8266 rtos3.1 的实现: https://github.com/xuhongv/xLibEsp8266Rtos3.1AirKiss
+- 微信公众号airkiss配网以及近场发现在esp32 esp-idf 的实现:https://github.com/xuhongv/xLibEsp32IdfAirKiss
 - 微信小程序控制esp8266实现七彩效果项目源码： https://github.com/xuhongv/WCMiniColorSetForEsp8266
 
 ## 讨论交流
