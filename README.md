@@ -29,7 +29,7 @@ Lin UI 是基于 **微信小程序原生语法** 实现的组件库。遵循简�
         <p style="font-size:12px;">QQ群号：434878850</p>
       </td>
       <td align="center" valign="middle" style="border-style:none">
-        <img class="QR-img" style="height: 60px; width:60px"  src="http://qinniu.xuhongv.com/wx.jpg">
+        <img class="QR-img" style="height: 60px; width:60px"  src="http://qinniu.xuhongv.com/wx.png">
         <p style="font-size:12px;">微信公众号：徐宏blog</p>
       </td>
     </tr>
