@@ -6,18 +6,18 @@
   <!-- </a> -->
 </p>
 
-<div align="center"> <span class="logo" > Lin UI </span> </div>
+<div align="center"> <span class="logo" > BlufiEsp32WeChat </span> </div>
 
 <div class="row" />
 <div align="center">
-  <span class="desc" >Fantastic native based Mini-Program components</span> 
+  <span class="desc" >让微信小程序也可以配网设备</span> 
 </div>
 
 
 
 # 简介
 
-Lin UI 是基于 **微信小程序原生语法** 实现的组件库。遵循简洁，易用的设计规范。
+BlufiEsp32WeChat 是基于 **微信小程序蓝牙配网设备** 实现的开源仓库，致力开源国内互联网。
 
 ## 讨论交流
 
