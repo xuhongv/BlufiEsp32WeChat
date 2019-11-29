@@ -2,7 +2,6 @@
   "pages": [
     "pages/index/index",
     "pages/search/search",
-    "pages/device/device",
     "pages/routerInput/routerInput",
     "pages/blueConnect/index"
   ],
