@@ -1,4 +1,3 @@
-
 //获取应用实例
 const app = getApp()
 const util = require('../../utils/blufi/util.js');
@@ -7,15 +6,16 @@ const md5 = require('../../utils/blufi/crypto/md5.min.js');
 const aesjs = require('../../utils/blufi/crypto/aes.js');
 let client = null;
 
-const timeOut = 20;//超时时间
+const timeOut = 20; //超时时间
 var timeId = "";
 var sequenceControl = 0;
 var sequenceNumber = -1;
 Page({
   data: {
+    isConnected: false,
     failure: false,
     value: 0,
-    desc: "Device connecting...",
+    desc: "请耐心等待...",
     isChecksum: true,
     isEncrypt: true,
     flagEnd: false,
@@ -31,8 +31,12 @@ Page({
     meshId: "",
     processList: [],
     result: [],
+    service_uuid: "0000FFFF-0000-1000-8000-00805F9B34FB",
+    characteristic_write_uuid: "0000FF01-0000-1000-8000-00805F9B34FB",
+    characteristic_read_uuid: "0000FF02-0000-1000-8000-00805F9B34FB",
+    callBackUri: null,
   },
-  blueConnect: function (event) {
+  blueConnect: function(event) {
     var self = this;
     self.setProcess(0, util.descSucList[0]);
     sequenceControl = 0;
@@ -43,15 +47,29 @@ Page({
       serviceId: "",
       uuid: "",
     });
+
+    wx.onBLEConnectionStateChange(function(res) {
+      // 该方法回调中可以用于处理连接意外断开等异常情况
+      console.log(`device ${res.deviceId} state has changed, connected: ${res.connected}`)
+      if (!res.connected && !self.data.isConnected) {
+        self.setFailProcess(true, util.descFailList[5])
+        setTimeout(function() {
+          wx.reLaunch({
+            url: self.data.callBackUri + "?blufiResult=fail"
+          })
+        }, 3000);
+      }
+    });
+
     wx.createBLEConnection({
-      // 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接 
+      // 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接
       deviceId: self.data.deviceId,
       timeout: 10000,
-      success: function (res) {
+      success: function(res) {
         self.setProcess(10, util.descSucList[1]);
         self.getDeviceServices(self.data.deviceId);
       },
-      fail: function (res) {
+      fail: function(res) {
         var num = self.data.blueConnectNum;
         if (num < 3) {
           self.blueConnect();
@@ -59,46 +77,44 @@ Page({
           self.setData({
             blueConnectNum: num
           })
-        } else {
-        }
+        } else {}
       }
     })
   },
-  getDeviceServices: function (deviceId) {
+  getDeviceServices: function(deviceId) {
     var self = this;
     self.setProcess(20, util.descSucList[2]);
     wx.getBLEDeviceServices({
-      // 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接 
+      // 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接
       deviceId: deviceId,
-      success: function (res) {
+      success: function(res) {
         var services = res.services;
         if (services.length > 0) {
           for (var i = 0; i < services.length; i++) {
             var uuid = services[i].uuid;
-            if (uuid == app.globalData.service_uuid) {
+            if (uuid == self.data.service_uuid) {
               self.getDeviceCharacteristics(deviceId, uuid);
               return false;
             }
           }
         }
       },
-      fail: function (res) {
-      }
+      fail: function(res) {}
     })
   },
-  getDeviceCharacteristics: function (deviceId, serviceId) {
+  getDeviceCharacteristics: function(deviceId, serviceId) {
     var self = this;
     self.setProcess(35, util.descSucList[3]);
     wx.getBLEDeviceCharacteristics({
-      // 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接 
+      // 这里的 deviceId 需要已经通过 createBLEConnection 与对应设备建立链接
       deviceId: deviceId,
       serviceId: serviceId,
-      success: function (res) {
+      success: function(res) {
         var list = res.characteristics;
         if (list.length > 0) {
           for (var i = 0; i < list.length; i++) {
             var uuid = list[i].uuid;
-            if (uuid == app.globalData.characteristic_write_uuid) {
+            if (uuid == self.data.characteristic_write_uuid) {
               self.openNotify(deviceId, serviceId, uuid);
               self.setData({
                 serviceId: serviceId,
@@ -109,12 +125,11 @@ Page({
           }
         }
       },
-      fail: function (res) {
-      }
+      fail: function(res) {}
     })
   },
   //通知设备交互方式（是否加密）
-  notifyDevice: function (deviceId, serviceId, characteristicId) {
+  notifyDevice: function(deviceId, serviceId, characteristicId) {
     var self = this;
     client = util.blueDH(util.DH_P, util.DH_G, crypto);
     var kBytes = util.uint8ArrayToArray(client.getPublicKey());
@@ -130,20 +145,22 @@ Page({
     var frameControl = util.getFrameCTRLValue(false, false, util.DIRECTION_OUTPUT, false, false);
     var value = util.writeData(util.PACKAGE_VALUE, util.SUBTYPE_NEG, frameControl, sequenceControl, data.length, data);
     var typedArray = new Uint8Array(value);
+
     wx.writeBLECharacteristicValue({
       deviceId: deviceId,
       serviceId: serviceId,
       characteristicId: characteristicId,
       value: typedArray.buffer,
-      success: function (res) {
+      success: function(res) {
         self.getSecret(deviceId, serviceId, characteristicId, client, kBytes, pBytes, gBytes, null);
       },
-      fail: function (res) {
-      }
+      fail: function(res) {}
     })
   },
-  getSecret: function (deviceId, serviceId, characteristicId, client, kBytes, pBytes, gBytes, data) {
-    var self = this, obj = [], frameControl = 0;
+  getSecret: function(deviceId, serviceId, characteristicId, client, kBytes, pBytes, gBytes, data) {
+    var self = this,
+      obj = [],
+      frameControl = 0;
     sequenceControl = parseInt(sequenceControl) + 1;
     if (!util._isEmpty(data)) {
       obj = util.isSubcontractor(data, true, sequenceControl);
@@ -174,27 +191,30 @@ Page({
     }
     var value = util.writeData(util.PACKAGE_VALUE, util.SUBTYPE_NEG, frameControl, sequenceControl, obj.len, obj.lenData);
     var typedArray = new Uint8Array(value);
+    //console.log("write typedArray", value)
+    //console.log("write characteristicId", characteristicId)
     wx.writeBLECharacteristicValue({
       deviceId: deviceId,
       serviceId: serviceId,
       characteristicId: characteristicId,
       value: typedArray.buffer,
-      success: function (res) {
+      success: function(res) {
         if (obj.flag) {
           self.getSecret(deviceId, serviceId, characteristicId, client, kBytes, pBytes, gBytes, obj.laveData);
         } else {
-          setTimeout(function () {
+          setTimeout(function() {
             self.writeDeviceStart(deviceId, serviceId, characteristicId, null);
           }, 3000)
         }
       },
-      fail: function (res) {
-      }
+      fail: function(res) {}
     })
   },
   // 告知设备数据开始写入
-  writeDeviceStart: function (deviceId, serviceId, characteristicId, data) {
-    var self = this, obj = {}, frameControl = 0;
+  writeDeviceStart: function(deviceId, serviceId, characteristicId, data) {
+    var self = this,
+      obj = {},
+      frameControl = 0;
     self.setProcess(40, util.descSucList[4]);
     sequenceControl = parseInt(sequenceControl) + 1;
     if (!util._isEmpty(data)) {
@@ -204,15 +224,17 @@ Page({
       obj = util.isSubcontractor([self.data.defaultData], self.data.isChecksum, sequenceControl, true);
       frameControl = util.getFrameCTRLValue(self.data.isEncrypt, self.data.isChecksum, util.DIRECTION_OUTPUT, false, obj.flag);
     }
-    var defaultData = util.encrypt(aesjs, app.globalData.md5Key, sequenceControl, obj.lenData, true);
+    var defaultData = util.encrypt(aesjs, self.data.md5Key, sequenceControl, obj.lenData, true);
     var value = util.writeData(util.PACKAGE_CONTROL_VALUE, util.SUBTYPE_WIFI_MODEl, frameControl, sequenceControl, obj.len, defaultData);
     var typedArray = new Uint8Array(value)
+    console.log("write typedArray", value)
+    console.log("write characteristicId", characteristicId)
     wx.writeBLECharacteristicValue({
       deviceId: deviceId,
       serviceId: serviceId,
       characteristicId: characteristicId,
       value: typedArray.buffer,
-      success: function (res) {
+      success: function(res) {
         if (obj.flag) {
           self.writeDeviceStart(deviceId, serviceId, characteristicId, obj.laveData);
         } else {
@@ -220,14 +242,16 @@ Page({
           self.writeRouterSsid(deviceId, serviceId, characteristicId, null);
         }
       },
-      fail: function (res) {
+      fail: function(res) {
         self.setFailProcess(true, util.descFailList[3]);
       }
     })
   },
   //写入路由ssid
-  writeRouterSsid: function (deviceId, serviceId, characteristicId, data) {
-    var self = this, obj = {}, frameControl = 0;
+  writeRouterSsid: function(deviceId, serviceId, characteristicId, data) {
+    var self = this,
+      obj = {},
+      frameControl = 0;
     sequenceControl = parseInt(sequenceControl) + 1;
     if (!util._isEmpty(data)) {
       obj = util.isSubcontractor(data, self.data.isChecksum, sequenceControl, self.data.isEncrypt);
@@ -237,7 +261,7 @@ Page({
       obj = util.isSubcontractor(ssidData, self.data.isChecksum, sequenceControl, self.data.isEncrypt);
       frameControl = util.getFrameCTRLValue(self.data.isEncrypt, self.data.isChecksum, util.DIRECTION_OUTPUT, false, obj.flag);
     }
-    var defaultData = util.encrypt(aesjs, app.globalData.md5Key, sequenceControl, obj.lenData, true);
+    var defaultData = util.encrypt(aesjs, self.data.md5Key, sequenceControl, obj.lenData, true);
     var value = util.writeData(util.PACKAGE_VALUE, util.SUBTYPE_SET_SSID, frameControl, sequenceControl, obj.len, defaultData);
     var typedArray = new Uint8Array(value)
     wx.writeBLECharacteristicValue({
@@ -245,22 +269,24 @@ Page({
       serviceId: serviceId,
       characteristicId: characteristicId,
       value: typedArray.buffer,
-      success: function (res) {
+      success: function(res) {
         if (obj.flag) {
           self.writeRouterSsid(deviceId, serviceId, characteristicId, obj.laveData);
         } else {
           self.writeDevicePwd(deviceId, serviceId, characteristicId, null);
         }
       },
-      fail: function (res) {
+      fail: function(res) {
         console.log(257);
         self.setFailProcess(true, util.descFailList[4]);
       }
     })
   },
   //写入路由密码
-  writeDevicePwd: function (deviceId, serviceId, characteristicId, data) {
-    var self = this, obj = {}, frameControl = 0;
+  writeDevicePwd: function(deviceId, serviceId, characteristicId, data) {
+    var self = this,
+      obj = {},
+      frameControl = 0;
     sequenceControl = parseInt(sequenceControl) + 1;
     if (!util._isEmpty(data)) {
       obj = util.isSubcontractor(data, self.data.isChecksum, sequenceControl, self.data.isEncrypt);
@@ -270,29 +296,29 @@ Page({
       obj = util.isSubcontractor(pwdData, self.data.isChecksum, sequenceControl, self.data.isEncrypt);
       frameControl = util.getFrameCTRLValue(self.data.isEncrypt, self.data.isChecksum, util.DIRECTION_OUTPUT, false, obj.flag);
     }
-    var defaultData = util.encrypt(aesjs, app.globalData.md5Key, sequenceControl, obj.lenData, true);
+    var defaultData = util.encrypt(aesjs, self.data.md5Key, sequenceControl, obj.lenData, true);
     var value = util.writeData(util.PACKAGE_VALUE, util.SUBTYPE_SET_PWD, frameControl, sequenceControl, obj.len, defaultData);
     var typedArray = new Uint8Array(value)
-    
+
     wx.writeBLECharacteristicValue({
       deviceId: deviceId,
       serviceId: serviceId,
       characteristicId: characteristicId,
       value: typedArray.buffer,
-      success: function (res) {
+      success: function(res) {
         if (obj.flag) {
           self.writeDevicePwd(deviceId, serviceId, characteristicId, obj.laveData);
         } else {
           self.writeDeviceEnd(deviceId, serviceId, characteristicId);
         }
       },
-      fail: function (res) {
+      fail: function(res) {
         self.setFailProcess(true, util.descFailList[4]);
       }
     })
   },
   //告知设备写入结束
-  writeDeviceEnd: function (deviceId, serviceId, characteristicId) {
+  writeDeviceEnd: function(deviceId, serviceId, characteristicId) {
     var self = this;
     sequenceControl = parseInt(sequenceControl) + 1;
     var frameControl = util.getFrameCTRLValue(self.data.isEncrypt, false, util.DIRECTION_OUTPUT, false, false);
@@ -303,55 +329,62 @@ Page({
       serviceId: serviceId,
       characteristicId: characteristicId,
       value: typedArray.buffer,
-      success: function (res) {
+      success: function(res) {
         self.onTimeout(0);
       },
-      fail: function (res) {
+      fail: function(res) {
         self.setFailProcess(true, util.descFailList[4]);
       }
     })
   },
   //连接超时
-  onTimeout: function (num) {
+  onTimeout: function(num) {
     const self = this;
     console.log(319);
     if (timeId != "") {
       clearInterval(timeId);
     }
-    timeId = setInterval(function () {
+    timeId = setInterval(function() {
       if (num < timeOut) {
         num++;
       } else {
         clearInterval(timeId);
         console.log(324);
         self.setFailProcess(true, util.descFailList[4]);
+        if (self.data.isConnected)
+        setTimeout(function() {
+          wx.reLaunch({
+            url: self.data.callBackUri + "?blufiResult=fail"
+          })
+        }, 2500);
       }
     }, 1000)
   },
   //监听通知
-  onNotify: function () {
+  onNotify: function() {
     var self = this;
-    wx.onBLECharacteristicValueChange(function (res) {
+    wx.onBLECharacteristicValueChange(function(res) {
+      console.log("onBLECharacteristicValueChange")
       self.getResultType(util.ab2hex(res.value));
     })
   },
   //启用通知
-  openNotify: function (deviceId, serviceId, characteristicId) {
+  openNotify: function(deviceId, serviceId, characteristicId) {
     var self = this;
+    //console.log('notifyBLECharacteristicValueChange openNotify', characteristicId);
     wx.notifyBLECharacteristicValueChange({
       state: true, // 启用 notify 功能
       deviceId: deviceId,
       serviceId: serviceId,
-      characteristicId: app.globalData.characteristic_read_uuid,
-      success: function (res) {
+      characteristicId: self.data.characteristic_read_uuid,
+      success: function(res) {
         self.notifyDevice(deviceId, serviceId, characteristicId);
         self.onNotify();
       },
-      fail: function (res) {
-      }
+      fail: function(res) {}
     })
   },
-  getSsids: function (str) {
+  getSsids: function(str) {
     var list = [],
       strs = str.split(":");
     for (var i = 0; i < strs.length; i++) {
@@ -359,15 +392,16 @@ Page({
     }
     return list;
   },
-  getCharCodeat: function (str) {
+  getCharCodeat: function(str) {
     var list = [];
     for (var i = 0; i < str.length; i++) {
       list.push(str.charCodeAt(i));
     }
     return list;
   },
-  setProcess: function (value, desc) {
-    var self = this, list = [];
+  setProcess: function(value, desc) {
+    var self = this,
+      list = [];
     list = self.data.processList;
     list.push(desc);
     self.setData({
@@ -382,20 +416,17 @@ Page({
       clearInterval(timeId);
       sequenceControl = 0;
       self.saveWifi();
-      wx.showToast({
-        title: '配网成功',
-        icon: 'none',
-        duration: 2000
-      })
-      setTimeout(function () {
+
+      setTimeout(function() {
         wx.reLaunch({
-          url: '/pages/index/index'
+          url: self.data.callBackUri + "?blufiResult=ok"
         })
       }, 3000)
     }
   },
-  setFailProcess: function (flag, desc) {
-    var self = this, list = [];
+  setFailProcess: function(flag, desc) {
+    var self = this,
+      list = [];
     list = self.data.processList;
     list.push(desc);
     self.setFailBg();
@@ -405,13 +436,19 @@ Page({
       desc: desc,
     });
   },
-  getResultType: function (list) {
+  getResultType: function(list) {
+
     var self = this;
     var result = self.data.result;
     console.log(result);
     if (list.length < 4) {
       cosnole.log(407);
       self.setFailProcess(true, util.descFailList[4]);
+      setTimeout(function() {
+        wx.reLaunch({
+          url: self.data.callBackUri + "?blufiResult=fail"
+        })
+      }, 3000);
       return false;
     }
     var val = parseInt(list[0], 16),
@@ -423,7 +460,7 @@ Page({
       return false;
     }
     var fragNum = util.hexToBinArray(list[1]);
-    list = util.isEncrypt(self, fragNum, list, app.globalData.md5Key);
+    list = util.isEncrypt(self, fragNum, list, self.data.md5Key);
     result = result.concat(list);
     self.setData({
       result: result,
@@ -439,7 +476,7 @@ Page({
             var num = parseInt(result[i], 16) + "";
             console.log(num);
             if (i == 0) {
-              self.setProcess(85, "Connected: " + util.successList[num]);
+              self.setProcess(85, "入网成功"); //+ util.successList[num]
             } else if (i == 1) {
               if (num == 0) {
                 self.setProcess(100, util.descSucList[6]);
@@ -459,10 +496,11 @@ Page({
           var arr = util.hexByInt(result.join(""));
           var clientSecret = client.computeSecret(new Uint8Array(arr));
           var md5Key = md5.array(clientSecret);
-          app.globalData.md5Key = md5Key;
+          self.data.md5Key = md5Key;
           self.setData({
             result: [],
           })
+          //console.log("writeDeviceStart:", self.data.uuid)
           self.writeDeviceStart(self.data.deviceId, self.data.serviceId, self.data.uuid, null);
         } else {
           console.log(468);
@@ -474,7 +512,7 @@ Page({
       }
     }
   },
-  saveWifi: function () {
+  saveWifi: function() {
     var self = this;
     wx.getStorage({
       key: 'WIFIINFO',
@@ -491,21 +529,30 @@ Page({
             }
           }
           if (!flag) {
-            data.push({ name: self.data.ssid, password: self.data.password })
+            data.push({
+              name: self.data.ssid,
+              password: self.data.password
+            })
           }
 
         } else {
           data = [];
-          data.push({ name: self.data.ssid, password: self.data.password })
+          data.push({
+            name: self.data.ssid,
+            password: self.data.password
+          })
         }
         wx.setStorage({
           key: "WIFIINFO",
           data: data
         })
       },
-      fail: function (res) {
+      fail: function(res) {
         var data = [];
-        data.push({ name: self.data.ssid, password: self.data.password });
+        data.push({
+          name: self.data.ssid,
+          password: self.data.password
+        });
         wx.setStorage({
           key: "WIFIINFO",
           data: data
@@ -514,34 +561,37 @@ Page({
     })
 
   },
-  closeConnect: function () {
+  closeConnect: function() {
     var self = this;
+    this.setData({
+      isConnected: true
+    })
     wx.closeBLEConnection({
       deviceId: self.data.deviceId,
-      success: function (res) {
+      success: function(res) {
         console.log(res);
       }
     })
     wx.closeBluetoothAdapter({
-      success: function () {
-      }
+      success: function() {}
     });
   },
   //设置配网失败背景色
-  setFailBg: function () {
+  setFailBg: function() {
     wx.setNavigationBarColor({
       frontColor: "#ffffff",
       backgroundColor: '#737d89',
     })
   },
   //设置配网成功背景色
-  setSucBg: function () {
+  setSucBg: function() {
     wx.setNavigationBarColor({
       frontColor: "#ffffff",
       backgroundColor: '#109ec3',
     })
   },
-  onLoad: function (options) {
+  onLoad: function(options) {
+    console.log(JSON.stringify(options))
     var self = this;
     self.setSucBg();
     wx.setNavigationBarTitle({
@@ -551,14 +601,15 @@ Page({
       deviceId: options.deviceId,
       ssid: unescape(options.ssid),
       password: unescape(options.password),
-    })
-    sequenceControl = options.sequenceControl;
+      callBackUri: options.callBackUri,
+    });
+    //sequenceControl = options.sequenceControl;
     self.blueConnect();
   },
   /**
    * 生命周期函数--监听页面隐藏
    */
-  onHide: function () {
+  onHide: function() {
     this.closeConnect();
   },
 })

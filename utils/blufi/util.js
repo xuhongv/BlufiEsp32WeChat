@@ -1,4 +1,3 @@
-const app = getApp();
 const SERVICE_TYPE = "_notice_service._tcp.";
 const FACE_DERECT = "face_detect";
 const FACE_RECOGNIZE = "face_recognize";
@@ -9,9 +8,9 @@ const FACE_DELETE = "face_delete";
 const DELETE_ALL = "delete_all";
 const ON_STATUS = 1;
 const OFF_STATUS = 0;
-const HTTP_STR = "http://" + app.globalData.ip + ":80/control";
-const HTTP_STATUS = "http://" + app.globalData.ip + ":80/status";
-const HTTP_STREAM = "http://" + app.globalData.ip + ":81/stream";
+const HTTP_STR = "http://null:80/control";
+const HTTP_STATUS = "http://null:80/status";
+const HTTP_STREAM = "http://null:81/stream";
 const FRAME_CTRL_POSITION_ENCRYPTED = 0;
 const FRAME_CTRL_POSITION_CHECKSUM = 1;
 const FRAME_CTRL_POSITION_DATA_DIRECTION = 2;
@@ -40,9 +39,7 @@ const descSucListEN = ["Bluetooth connecting...", "Bluetooth connection successf
 const descFailListEN = ["Bluetooth connection failed", "Device information acquisition failed", "Attribute information acquisition failed", "Configuration information sent failed", "Distribution network failed"];
 
 const descSucList = ["蓝牙连接...", "蓝牙连接成功", "设备信息已成功获取", "属性信息已成功获取", "发送配置信息...", "成功发送配置信息", "成功连接"];
-const descFailList = ["蓝牙连接失败", "设备信息获取失败", "属性信息获取失败", "配置信息发送失败", "网络配置失败"];
-
-
+const descFailList = ["蓝牙连接失败", "设备信息获取失败", "属性信息获取失败", "配置信息发送失败", "网络配置失败","蓝牙异常断开"];
 const successList = {
   "0": "NULL",
   "1": "STA",
@@ -134,7 +131,7 @@ const uint8ArrayToArray = uint8Array => {
 
   return array;
 }
-//16进制转二进制数组 
+//16进制转二进制数组
 const hexToBinArray = str => {
   var dec = parseInt(str, 16),
     bin = dec.toString(2),
@@ -212,7 +209,7 @@ const setSucBg = () => {
     backgroundColor: '#4d9efb',
   })
 }
-//组装数据格式 
+//组装数据格式
 const writeData = (type, subType, frameCtl, seq, len, data) => {
   var self = this,
     value = [],

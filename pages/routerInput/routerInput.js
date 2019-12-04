@@ -1,6 +1,4 @@
-const app = getApp();
 const util = require("../../utils/blufi/util.js");
-
 Page({
 
   /**
@@ -91,7 +89,7 @@ Page({
     console.log("data" + JSON.stringify(self.data))
     if (self.data.wifiInfo) {
       wx.navigateTo({
-        url: '/pages/blueConnect/index?deviceId=' + self.data.deviceId + "&ssid=" + self.data.wifiInfo.SSID + "&password=" + self.data.password,
+        url: '/pages/blueConnect/index?deviceId=' + self.data.deviceId + "&ssid=" + self.data.wifiInfo.SSID + "&password=" + self.data.password  + "&callBackUri=/pages/index/index"
       })
     } else {
       wx.showToast({
@@ -100,11 +98,7 @@ Page({
         duration: 3000
       })
     }
-
   },
-  /**
-   * 生命周期函数--监听页面加载
-   */
   onLoad: function (options) {
     var self = this;
     wx.setNavigationBarTitle({
@@ -119,35 +113,6 @@ Page({
       }
     })
   },
-
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload: function () {
-
-  },
-
   /**
    * 页面相关事件处理函数--监听用户下拉动作
    */
@@ -161,19 +126,5 @@ Page({
     setTimeout(function () {
       wx.stopPullDownRefresh();
     }, 6000);
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom: function () {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage: function () {
-
   }
 })

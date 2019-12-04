@@ -1,5 +1,4 @@
 //获取应用实例
-const app = getApp();
 const util = require('../../utils/blufi/util.js');
 
 Page({
@@ -63,6 +62,7 @@ Page({
         wx.stopPullDownRefresh();
         wx.hideLoading();
       }
+      console.log("list:" + JSON.stringify(list))
       self.setData({
         deviceList: self.data.deviceList.concat(list)
       })
