@@ -14,6 +14,13 @@
 </div>
 
 
+## 维护日志，版本修订；
+
+|修改时间|更新日志|
+|----|----|
+|2019.5.17|初次拟稿，完成配网，暂不开放|
+|2019.11.30|首次开源|
+|2019.12.4|去除全局配置文件，增加对外使用文档|
 
 ## 一、简介
 
@@ -24,9 +31,9 @@ BlufiEsp32WeChat 是基于 **微信小程序蓝牙配网设备** 实现的开源
 
 ## 二、如何集成
 
-- 首先把 《blufi》 这个配网核心库所需文件夹放在你的工程里面；
-- 为了方便，直接把 《images》下面的图片复制到自己到工程里面，以及把界面《bleConnect》也复制到自己到工程里面去；
-- 蓝牙搜索附近设备展示列表，自行处理；最后要传给界面《bleConnect》到参数只有四个：
+- 1.首先把 《blufi》 这个配网核心库所需文件夹放在你的工程里面；
+- 2.为了方便，直接把 《images》下面的图片复制到自己到工程里面，以及把界面《bleConnect》也复制到自己到工程里面去；
+- 3.蓝牙搜索附近设备展示列表，自行处理；最后要传给界面《bleConnect》到参数只有四个：
 
 |参数|含义|
 |----|----|
@@ -35,14 +42,36 @@ BlufiEsp32WeChat 是基于 **微信小程序蓝牙配网设备** 实现的开源
 |password|要连接的路由器的密码|
 |callBackUri|自定义配网回调结果的界面（比如 /pages/index/index ）|
 
-比如这样：
+- 4.比如这样：
 
 ```
 wx.navigateTo({
   url: '/pages/blueConnect/index?deviceId=123456&ssid=TP-xx&password=12345678&callBackUri=/pages/index/index"
   })
 ```
+- 5.其中，当配网不管成功与否，都会带参数跳转到 callBackUri 这个定义的页面；参数名为 ```blufiResult``` 如下：
 
+|参数|含义|
+|----|----|
+|true|配网成功|
+|false|配网失败|
+
+- 6.比如这样处理：
+
+```
+    //生命周期函数--监听页面加载 
+    onLoad: function (options) {
+        var that = this;
+        if (options.blufiResult){
+          var result = options.blufiResult === 'ok' ? "配网成功" : "配网失败";
+          wx.showToast({
+            title: result,
+            icon: 'none',
+            duration: 2000
+          });
+        }
+     }
+```
 
 ## 三、本人开源 微信物联网控制 一览表
 
