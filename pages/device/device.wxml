@@ -1,0 +1,46 @@
+<view class="page">
+    <view class="weui-form">
+      <view class="weui-form__text-area">
+        <view class="weui-form__title">xBlufi蓝牙配网{{version}}</view>
+        <view class="weui-form__desc">设计理念：简单/快速上手</view>
+      </view>
+      <view class="weui-form__control-area">
+        <view class="weui-cells__group weui-cells__group_form">
+            <view class="weui-cells__title">需配置入网当前路由器SSID：{{ssid}}</view>
+            <view class="weui-cells weui-cells_form">
+              <view class="weui-cell">
+                <view class="weui-cell__hd"><label class="weui-label">密码：</label></view>
+                <view class="weui-cell__bd">
+                    <input class="weui-input" value="{{password}}" bindinput="bindPasswordInput" type="text"  placeholder="在此输入路由器密码"/>
+                </view>
+              </view>
+              <view class="weui-cell">
+                <view class="weui-cell__hd"><label class="weui-label">数据：</label></view>
+                <view class="weui-cell__bd">
+                    <input class="weui-input" bindinput="bindCustomDataInput" type="text"  placeholder="在此输入自定义数据"/>
+                </view>
+              </view>
+            </view>
+        </view>
+      </view>
+      <view class="weui-form__tips-area">
+        <label for="weuiAgree" class="weui-agree">
+          <input id="weuiAgree" type="checkbox" class="weui-agree__checkbox"/><span class="weui-agree__text">{{connected?"蓝牙已连接":"蓝牙已断开"}}
+          </span>
+        </label>
+      </view>
+      <view class="weui-form__opr-area">
+        <button bindtap="OnClickStart" disabled="{{!isInitOK}}" type="primary">{{isInitOK?"开始配网并发送自定义数据":"设备初始化失败或非2.4G网络"}}</button>
+      </view>
+  
+      <view class="weui-form__extra-area">
+        <view class="weui-footer">
+          <view class="weui-footer__links">
+            <navigator href="javascript:void(0);" class="weui-footer__link">https://github.com/xuhongv</navigator>
+          </view>
+          <view class="weui-footer__text">Copyright ©2019 半颗心脏 ver{{version}}</view>
+        </view>
+      </view>
+    </view>
+</view>
+

@@ -1,38 +1,27 @@
 page {
-    height: 100%;
-    overflow: hidden;
+  background-color: #f8f8f8;
 }
-.item {
-    display: flex;
-    height: 140rpx;
-    width: 100%;
-    align-items: center;
-    border-bottom: 1px solid #eee;
+.container {
+  padding: 0 30rpx 0 30rpx;
+  align-items: center;
 }
-
-.item-img {
-    flex: 0 0 120rpx;
-    height: 120rpx;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 100%;
+.list-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0 10px 0;
+  box-sizing: border-box;
+  border: 1px solid #000;
+  border-style: none none solid none;
+  border-bottom-color: lightgray;
 }
-
-.bluetooth-img {
-    height: 80rpx;
-    width: 80rpx;
+.list-item:last-child {
+  border-style: none;
 }
-
-.item-name {
-    flex: 1;
-    padding-left: 10px;
-    display: flex;
-    flex-direction: column;
-    font-size: 32rpx;
-}
-
-.text-rssi {
-    font-size: 28rpx;
-    color: #999;
+.button {
+  position: fixed;
+  width: 690rpx;
+  bottom: 30rpx;
 }

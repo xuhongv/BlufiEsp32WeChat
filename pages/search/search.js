@@ -1,99 +1,114 @@
-//获取应用实例
-const util = require('../../utils/blufi/util.js');
+const app = getApp()
+var xBlufi = require("../../utils/blufi/xBlufi.js");
+let _this = null;
 
 Page({
   data: {
-    deviceList: [],
-    deviceId: "",
-    blufiFilterName: null,
+    devicesList: [],
+    searching: false,
   },
-  bindViewConnect: function(event) {
-    console.log("click:" + JSON.stringify(event))
-    var self = this;
-    let deviceId = event.currentTarget.dataset.value;
-    self.setData({
-      deviceId: deviceId
-    });
-    wx.stopBluetoothDevicesDiscovery();
-    wx.navigateTo({
-      url: '/pages/routerInput/routerInput?deviceId=' + deviceId,
-    })
+  onLoad: function() {
+    _this = this;
+    xBlufi.initXBlufi(1);
+    console.log("xBlufi", xBlufi.XMQTT_SYSTEM)
+    xBlufi.listenDeviceMsgEvent(true, this.funListenDeviceMsgEvent);
   },
-  openBluetooth: function() {
-    const self = this;
-    wx.closeBluetoothAdapter({
-      success: function() {}
-    });
-    wx.openBluetoothAdapter({
-      success: function(res) {
-        wx.startBluetoothDevicesDiscovery({
-          success: function(res) {
-            self.getBluDevice();
-          }
-        })
-      },
-      fail: function(res) {
-        wx.showToast({
-          title: '请打开蓝牙',
-          icon: 'none',
-          duration: 2000
-        })
-      }
-    })
-  },
-  getBluDevice: function() {
-    var self = this;
-    wx.getBluetoothDevices({
-      success: function(res) {
-        var list = util.filterDevice(res.devices, self.data.blufiFilterName);
-        if (list.length > 0) {
-          wx.stopPullDownRefresh();
-          wx.hideLoading();
+  funListenDeviceMsgEvent: function(options) {
+
+    switch (options.type) {
+
+     
+      case xBlufi.XBLUFI_TYPE.TYPE_GET_DEVICE_LISTS:
+        if (options.result)
+          _this.setData({
+            devicesList: options.data
+          });
+        break;
+
+      case xBlufi.XBLUFI_TYPE.TYPE_CONNECTED:
+        console.log("连接回调：" + JSON.stringify(options))
+        if (options.result) {
+          wx.hideLoading()
+          wx.showToast({
+            title: '连接成功',
+            icon: 'none'
+          })
+          wx.navigateTo({
+            url: '../device/device?deviceId=' + options.data.deviceId + '&name=' + options.data.name,
+          });
+
+        } else {
+          // wx.hideLoading()
+          // wx.showModal({
+          //   title: '提示',
+          //   content: '连接失败',
+          //   showCancel: false
+          // });
         }
-        self.setData({
-          deviceList: list
-        })
-      }
-    })
-    wx.onBluetoothDeviceFound(function(res) {
-      console.log(res.devices[0].name);
-      var list = util.filterDevice(res.devices, self.data.blufiFilterName);
-      if (list.length > 0) {
-        wx.stopPullDownRefresh();
-        wx.hideLoading();
-      }
-      console.log("list:" + JSON.stringify(list))
-      self.setData({
-        deviceList: self.data.deviceList.concat(list)
+        break;
+
+      case xBlufi.XBLUFI_TYPE.TYPE_GET_DEVICE_LISTS_START:
+        if (!options.result) {
+          console.log("蓝牙未开启 fail =》", options)
+          wx.showToast({
+            title: '蓝牙未开启',
+            icon: 'none'
+          })
+        } else {
+          //蓝牙搜索开始
+          _this.setData({
+            searching: true
+          });
+        }
+        break;
+
+      case xBlufi.XBLUFI_TYPE.TYPE_GET_DEVICE_LISTS_STOP:
+        if (options.result) {
+          //蓝牙停止搜索ok
+          console.log('蓝牙停止搜索ok')
+        } else {
+          //蓝牙停止搜索失败
+          console.log('蓝牙停止搜索失败')
+        }
+        _this.setData({
+          searching: false
+        });
+        break;
+
+    }
+  },
+  Search: function() {
+    if (this.data.searching) {
+      xBlufi.notifyStartDiscoverBle({
+        'isStart': false
       })
-    })
-  },
-  onLoad: function(options) {
-    var self = this;
-    this.setData({
-      blufiFilterName: options.blufiFilterName
-    })
-    wx.setNavigationBarTitle({
-      title: '设备扫描'
-    });
-    wx.showLoading({
-      title: '设备扫描中...',
-    })
-    self.openBluetooth();
-  },
-  onShow: function() {
-    var self = this,
-      deviceId = self.data.deviceId;
-    if (!util._isEmpty(deviceId)) {
-      wx.closeBLEConnection({
-        deviceId: deviceId,
+    } else {
+      xBlufi.notifyStartDiscoverBle({
+        'isStart': true
       })
     }
   },
-  onPullDownRefresh: function() {
-    this.setData({
-      deviceList: []
+  Connect: function(e) {
+    //停止搜索
+    xBlufi.notifyStartDiscoverBle({
+      'isStart': false
     })
-    this.openBluetooth();
+    for (var i = 0; i < _this.data.devicesList.length; i++) {
+      if (e.currentTarget.id === _this.data.devicesList[i].deviceId) {
+        let name = _this.data.devicesList[i].name
+        console.log('点击了，蓝牙准备连接的deviceId:' + e.currentTarget.id)
+        xBlufi.notifyConnectBle({
+          isStart: true,
+          deviceId: e.currentTarget.id,
+          name
+        });
+        wx.showLoading({
+          title: '连接蓝牙设备中...',
+        })
+      }
+    }
   },
-})
+  onUnload: function() {
+    xBlufi.listenDeviceMsgEvent(false, this.funListenDeviceMsgEvent);
+  }
+});

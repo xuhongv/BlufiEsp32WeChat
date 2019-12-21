@@ -1,0 +1,5 @@
+page,.page{height:100%;}
+
+button{
+  width: 75%;
+}

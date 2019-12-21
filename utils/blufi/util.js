@@ -211,9 +211,7 @@ const setSucBg = () => {
 }
 //组装数据格式
 const writeData = (type, subType, frameCtl, seq, len, data) => {
-  var self = this,
-    value = [],
-    type = getType(type, subType);
+  var value = [],type = getType(type, subType);
   value.push(type);
   value.push(frameCtl);
   value.push(seq);
@@ -285,52 +283,7 @@ const encrypt = (aesjs, md5Key, sequence, data, checksum) => {
   var encryptData = uint8ArrayToArray(blueAesEncrypt(aesjs, md5Key, iv, new Uint8Array(list)));
   return encryptData.concat(sumArr);
 }
-//判断返回的数据是否加密
-const isEncrypt = (self, fragNum, list, md5Key) => {
-  var checksum = [],
-    checkData = [];
-  if (fragNum[7] == "1") { //返回数据加密
-    if (fragNum[6] == "1") {
-      var len = list.length - 2;
-      // checkData = list.slice(2, len);
-      // checksum = list.slice(len);
-      // console.log(checksum);
-      // var crc = caluCRC(0, checkData);
-      // var checksumByte1 = crc & 0xff;
-      // var checksumByte2 = (crc >> 8) & 0xff;
-      list = list.slice(0, len);
-    }
-    var iv = this.generateAESIV(parseInt(list[2], 16));
-    if (fragNum[3] == "0") { //未分包
-      list = list.slice(4);
-      self.setData({
-        flagEnd: true
-      })
-    } else { //分包
-      list = list.slice(6);
-    }
-    list = uint8ArrayToArray(this.blueAesDecrypt(aesjs, md5Key, iv, new Uint8Array(list)));
-  } else { //返回数据未加密
-    if (fragNum[6] == "1") {
-      var len = list.length - 2;
-      // checkData = list.slice(2, len);
-      // checksum = list.slice(len);
-      // var crc = caluCRC(0, checkData);
-      // var checksumByte1 = crc & 0xff;
-      // var checksumByte2 = (crc >> 8) & 0xff;
-      list = list.slice(0, len);
-    }
-    if (fragNum[3] == "0") { //未分包
-      list = list.slice(4);
-      self.setData({
-        flagEnd: true
-      })
-    } else { //分包
-      list = list.slice(6);
-    }
-  }
-  return list;
-}
+
 //DH加密
 const blueDH = (p, g, crypto) => {
   var client = crypto.createDiffieHellman(p, "hex", g, "hex");
@@ -465,7 +418,6 @@ module.exports = {
   blueAesDecrypt: blueAesDecrypt,
   uint8ArrayToArray: uint8ArrayToArray,
   generateAESIV: generateAESIV,
-  isEncrypt: isEncrypt,
   caluCRC: caluCRC,
   encrypt: encrypt,
   DH_P: DH_P,

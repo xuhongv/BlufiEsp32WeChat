@@ -1,14 +1,12 @@
 {
   "pages": [
-    "pages/index/index",
     "pages/search/search",
-    "pages/routerInput/routerInput",
-    "pages/blueConnect/index"
+    "pages/device/device"
   ],
   "window": {
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#99CCFF",
-    "navigationBarTitleText": "BluFiEsp32",
+    "navigationBarBackgroundColor": "#f8f8f8",
+    "navigationBarTitleText": "xBlufi蓝牙配网",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#f8f8f8"
   },
