@@ -477,6 +477,10 @@ function init() {
       wx.createBLEConnection({
         deviceId: options.deviceId,
         success: function(res) {
+           wx.setBLEMTU({
+            deviceId: options.deviceId,
+            mtu:128
+           })
           self.data.deviceId = options.deviceId
           mDeviceEvent.notifyDeviceMsgEvent({
             'type': mDeviceEvent.XBLUFI_TYPE.TYPE_CONNECTED,
