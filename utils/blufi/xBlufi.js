@@ -16,6 +16,7 @@ let XBLUFI_TYPE = {
   TYPE_INIT_ESP32_RESULT: '2',
   TYPE_RECIEVE_CUSTON_DATA: '3', //接收到自定义数据
   TYPE_CONNECT_ROUTER_RESULT: '4',
+  TYPE_CONNECT_NEAR_ROUTER_LISTS: '5',
 
 
   TYPE_GET_DEVICE_LISTS_START: ' 41', //发现设备列表回调开始
@@ -35,6 +36,8 @@ let OnFireEvent = {
 
   EVENT_NOFITY_SEND_ROUTER_SSID_PASSWORD: '50', //通知发送路由器的ssid和password
   EVENT_NOFITY_SEND_CUSTON_DATA: '51', //通知发送自定义数据
+  EVENT_NOFITY_SEND_GET_ROUTER_SSID:"52",//获取周围的SSID
+
 }
 
 /**
@@ -125,6 +128,24 @@ function listenInitBleEsp32(isSetListener, funtion) {
   }
 }
 
+/**
+ * 获取模组周围的SSID
+ * @param options NULL
+ */
+function notifySendGetNearRouterSsid() {
+  mOnFire.fire(OnFireEvent.EVENT_NOFITY_SEND_GET_ROUTER_SSID, null);
+}
+/**
+ * 获取模组周围的SSID
+ * @param options 连接参数 {"isStart":true} 是否开始发现设备
+ */
+function listenSendGetNearRouterSsid(isSetListener, funtion) {
+  if (isSetListener) {
+    mOnFire.on(OnFireEvent.EVENT_NOFITY_SEND_GET_ROUTER_SSID, funtion)
+  } else {
+    mOnFire.un(funtion)
+  }
+}
 
 
 /**
@@ -194,6 +215,10 @@ module.exports = {
 
   notifySendCustomData,
   listenSendCustomData,
+
+
+  notifySendGetNearRouterSsid,
+  listenSendGetNearRouterSsid,
 
 
   initXBlufi,
