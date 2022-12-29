@@ -32,7 +32,7 @@ let OnFireEvent = {
 
 
 
-  ENENT_ALL: '6',
+  EVENT_ALL: '6',
 
   EVENT_NOFITY_SEND_ROUTER_SSID_PASSWORD: '50', //通知发送路由器的ssid和password
   EVENT_NOFITY_SEND_CUSTON_DATA: '51', //通知发送自定义数据
@@ -56,13 +56,13 @@ function initXBlufi(type) {
 
 
 function notifyDeviceMsgEvent(options) {
-  mOnFire.fire(OnFireEvent.ENENT_ALL, options);
+  mOnFire.fire(OnFireEvent.EVENT_ALL, options);
 }
 
 
 function listenDeviceMsgEvent(isSetListener, funtion) {
   if (isSetListener) {
-    mOnFire.on(OnFireEvent.ENENT_ALL, funtion)
+    mOnFire.on(OnFireEvent.EVENT_ALL, funtion)
   } else {
     mOnFire.un(funtion)
   }
