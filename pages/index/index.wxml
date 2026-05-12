@@ -1,0 +1,34 @@
+<view class="container">
+  <view class="header">
+    <view class="status-bar">状态: {{status}}</view>
+    <button type="primary" bindtap="toggleSearch" class="search-btn">
+      {{searching ? '停止搜索' : '搜索蓝牙设备'}}
+    </button>
+    <view class="filter-box">
+      <input class="filter-input" placeholder="输入名称过滤设备" bindinput="onFilterInput" value="{{filterName}}" />
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="device-list">
+    <block wx:for="{{filteredDevices}}" wx:key="deviceId">
+      <view class="device-item" bindtap="createBLEConnection" data-device-id="{{item.deviceId}}" data-name="{{item.name || item.localName}}">
+        <view class="device-info">
+          <view class="device-name">{{item.name || item.localName}}</view>
+          <view class="device-id">UUID: {{item.deviceId}}</view>
+          <view class="device-rssi">RSSI: {{item.RSSI}}dBm</view>
+        </view>
+        <view class="device-action">
+          <text class="connect-text">连接</text>
+        </view>
+      </view>
+    </block>
+    <view wx:if="{{filteredDevices.length === 0}}" class="empty-tip">
+      <text>暂无符合条件的设备</text>
+    </view>
+  </scroll-view>
+
+  <view class="footer">
+    <text class="footer-text">Copyright ©2019 半颗心脏 </text>
+    <text class="footer-link" selectable="true">https://github.com/xuhongv</text>
+  </view>
+</view>

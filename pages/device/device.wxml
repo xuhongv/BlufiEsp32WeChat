@@ -1,57 +1,81 @@
-<view class="page">
-  <view class="weui-form">
-    <view class="weui-form__text-area">
-      <view class="weui-form__title">xBlufi蓝牙配网{{version}}</view>
-      <view class="weui-form__desc">设计理念：简单/快速上手</view>
-    </view>
-    <view class="weui-form__control-area">
-      <view class="weui-cells__group weui-cells__group_form">
-        <view class="weui-cells__title">需配置入网当前路由器SSID：{{ssid}}</view>
-        <view class="weui-cells weui-cells_form">
-          <view class="weui-cell">
-            <picker bindchange="bindPickerChange" value="{{index}}" range="{{array}}">
-              <view class="picker">
-                Wi-Fi列表：{{array[index]}}
-              </view>
-            </picker>
-          </view>
-          <view class="weui-cell">
-            <view class="weui-cell__hd"><label class="weui-label">密码：</label></view>
-            <view class="weui-cell__bd">
-              <input class="weui-input" value="{{password}}" bindinput="bindPasswordInput" type="text" placeholder="在此输入路由器密码" />
+<view class="container">
+    <view class="content-scroll">
+        <!-- 顶部状态栏 -->
+        <view class="status-card">
+            <view class="device-name">{{name}}</view>
+            <view class="connection-status {{connected ? 'connected' : 'disconnected'}}">
+                {{connected ? '已连接' : '已断开'}}
             </view>
-          </view>
+        </view>
 
+        <!-- 状态提示 -->
+        <view class="status-tips">
+            <view>服务状态: {{serviceFound ? '已发现' : '搜索中...'}}</view>
+            <view>读通道 (Notify): {{notifyReady ? '就绪' : '未就绪'}}</view>
+            <view>写通道 (Write): {{writeReady ? '就绪' : '未就绪'}}</view>
+        </view>
 
-
-
-
-          <view class="weui-cell">
-            <view class="weui-cell__hd"><label class="weui-label">数据：</label></view>
-            <view class="weui-cell__bd">
-              <input class="weui-input" bindinput="bindCustomDataInput" type="text" placeholder="在此输入自定义数据" />
+        <!-- 日志区域 -->
+        <view class="log-area">
+            <view class="log-header">
+                <text>接收日志</text>
+                <text class="clear-log" bindtap="clearLog">清空</text>
             </view>
-          </view>
+            <scroll-view scroll-y class="log-scroll" scroll-top="{{scrollTop}}">
+                <block wx:for="{{logs}}" wx:key="index">
+                    <view class="log-item {{item.type}}">
+                        <text class="log-time">[{{item.time}}]</text>
+                        <text class="log-content">{{item.content}}</text>
+                    </view>
+                </block>
+                <view wx:if="{{logs.length === 0}}" class="empty-log">暂无日志</view>
+            </scroll-view>
         </view>
-      </view>
-    </view>
-    <view class="weui-form__tips-area">
-      <label for="weuiAgree" class="weui-agree">
-        <input id="weuiAgree" type="checkbox" class="weui-agree__checkbox" /><span class="weui-agree__text">{{connected?"蓝牙已连接":"蓝牙已断开"}}
-        </span>
-      </label>
-    </view>
-    <view class="weui-form__opr-area">
-      <button bindtap="OnClickStart" disabled="{{!isInitOK}}" type="primary">{{isInitOK?"开始配网并发送自定义数据":"设备初始化失败或非2.4G网络"}}</button>
     </view>
 
-    <view class="weui-form__extra-area">
-      <view class="weui-footer">
-        <view class="weui-footer__links">
-          <navigator href="javascript:void(0);" class="weui-footer__link">https://github.com/xuhongv</navigator>
+    <!-- 底部快捷指令区域 (固定) -->
+    <view class="footer-commands">
+        <view class="command-grid">
+            <view class="cmd-row">
+                <button disabled="{{connected}}" type="primary" class="cmd-btn" bindtap="connectBlueTooth">连接</button>
+                <button disabled="{{!connected}}"  class="cmd-btn-warn" bindtap="closeBLEConnection">断开</button>
+                <button disabled="{{!connected}}" type="primary" class="cmd-btn" bindtap="startEncrypt">加密</button>
+                <button disabled="{{!connected}}" type="primary" class="cmd-btn" bindtap="sendCommandGetVersion">版本</button>
+            </view>
+            <view class="cmd-row">
+                <button disabled="{{!connected}}" type="primary" class="cmd-btn" bindtap="sendCommandNetConfig">配网</button>
+                <button disabled="{{!connected}}" type="primary" class="cmd-btn" bindtap="sendCommandGetStatus">状态</button>
+                <button disabled="{{!connected}}" type="primary" class="cmd-btn" bindtap="sendCommandScanWiFiList">扫描</button>
+                <button disabled="{{!connected}}" type="primary" class="cmd-btn" bindtap="sendCommandCustomData">自定义</button>
+            </view>
         </view>
-        <view class="weui-footer__text">Copyright ©2019 半颗心脏 ver{{version}}</view>
-      </view>
     </view>
-  </view>
+
+    <!-- 配网弹窗 -->
+    <view class="modal" wx:if="{{showNetConfigModal}}">
+        <view class="modal-content">
+            <view class="modal-title">Wi-Fi配网</view>
+
+            <!-- SSID Picker -->
+            <view class="ssid-container">
+                <picker disabled="{{wifiList.length == 0}}"  class="ssid-picker" bindchange="onWifiPickerChange" value="{{selectedWifiIndex}}" range="{{wifiList}}" range-key="ssidRssi">
+                    <view class="picker-display">
+                        {{wifiList[selectedWifiIndex].ssidRssi || '请点击右侧刷新获取WiFi列表'}}
+                    </view>
+                </picker>
+                <view class="refresh-btn" bindtap="onRefreshWifiList">🔄</view>
+            </view>
+
+            <!-- Password Input -->
+            <view class="password-container">
+                <input class="modal-input password-input" cursor-spacing="140" placeholder="请输入密码" value="{{password}}" bindinput="onPasswordInput" password="{{!passwordVisible}}" />
+                <view class="refresh-btn" bindtap="togglePasswordVisibility">{{passwordVisible ? '👁️' : '🙈'}}</view>
+            </view>
+
+            <view class="modal-buttons">
+                <button class="modal-btn cancel" bindtap="onCancelNetConfig">取消</button>
+                <button class="modal-btn confirm" bindtap="onConfirmNetConfig">确定</button>
+            </view>
+        </view>
+    </view>
 </view>
