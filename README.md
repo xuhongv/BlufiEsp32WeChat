@@ -28,7 +28,7 @@
 
 ## 一、效果体验
 
-<img src="images\phone\ea83f4ab487021660f7f1552e8023ba2.png" alt="BlufiEsp32WeChat_SDK_3.1"  />
+<img src="images\Phone\ea83f4ab487021660f7f1552e8023ba2.png"/>
 
 - ## 架构设计
 
